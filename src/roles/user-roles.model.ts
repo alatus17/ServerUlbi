@@ -8,7 +8,7 @@ import {Role} from "./roles.model";
 export class UserRoles extends Model<UserRoles> {
 
     @Column({type: DataType.INTEGER, unique: true, autoIncrement: true, primaryKey: true})
-    declare id: number;
+    id: number;
 
     @ForeignKey(() => Role)
     @Column({type: DataType.INTEGER})
