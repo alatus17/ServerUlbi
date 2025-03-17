@@ -9,8 +9,7 @@ import {User} from "../users/users.model";
 export class AuthService {
 
     constructor(private userService: UsersService,
-                private jwtService: JwtService) {
-    }
+                private jwtService: JwtService) {}
 
     async login(userDto: CreateUserDto) {
         const user = await this.validateUser(userDto)
@@ -37,7 +36,7 @@ export class AuthService {
     private async validateUser(userDto: CreateUserDto) {
         const user = await this.userService.getUserByEmail(userDto.email);
         const passwordEquals = await bcrypt.compare(userDto.password, user.password);
-        if (!user && passwordEquals) {
+        if (user && passwordEquals) {
             return user;
         }
         throw new UnauthorizedException({message: 'Некорректный емайл или пароль'})
