@@ -1,0 +1,43 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "settings": {},
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "simple-import-sort"],
+  "rules": {
+    "import/order": "off", // Conflicts with simple-import-sort
+    "sort-imports": "off", // Conflicts with simple-import-sort
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "simple-import-sort/imports": [
+      "error",
+      {
+        "groups": [
+          // Группа для сторонних библиотек
+          ["^\\u0000"],
+          // Группа для сторонних модулей
+          ["^@nestjs", "^@nestjs/*", "^nestjs"],
+          // Прочие библиотеки
+          ["^sequelize-typescript", "^bcryptjs", "^process"],
+          // Группа для локальных модулей
+          ["^src", "^src/*", "^../", "^./"],
+          // Группа для остальных импортов
+          ["^"],
+          // Группа для типов и интерфейсов
+          ["^.*\\.types$", "^.*\\.interface$"]
+        ]
+      }
+    ]
+  }
+}
