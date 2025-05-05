@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { SequelizeModule } from '@nestjs/sequelize'
 import { ServeStaticModule } from '@nestjs/serve-static'
+import { TypeOrmModule } from '@nestjs/typeorm'
 
 import * as process from 'process'
 
+import { BooksModule } from './books/books.module'
 import { FilesModule } from './files/files.module'
 import { Post } from './posts/posts.model'
 import { PostsModule } from './posts/posts.module'
@@ -37,6 +39,17 @@ import { UsersModule } from 'users/users.module'
       models: [User, Role, UserRoles, Post],
       autoLoadModels: true,
     }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.POSTGRES_HOST,
+      port: Number(process.env.POSTGRESS_PORT),
+      username: process.env.POSTGRES_USER,
+      password: String(process.env.POSTGRES_PASSWORD),
+      database: process.env.POSTGRES_DB,
+      synchronize: true,
+      autoLoadEntities: true,
+    }),
+    BooksModule,
     UsersModule,
     RolesModule,
     AuthModule,
