@@ -32,7 +32,7 @@ export class AuthService {
         HttpStatus.BAD_REQUEST
       )
     }
-    const hashPassword = await bcrypt.hash(userDto.password, 5)
+    const hashPassword = await bcrypt.hash(userDto.password, 10)
     const user = await this.userService.createUser({
       ...userDto,
       password: hashPassword,
@@ -41,20 +41,51 @@ export class AuthService {
   }
 
   private async generateToken(user: User) {
-    const payload = { email: user.email, id: user.id, roles: user.roles }
+    const payload = {
+      email: user.email,
+      id: user.id,
+      roles: user.roles.map((role) => role.value),
+    }
+
     return {
       token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        roles: user.roles.map((role) => role.value),
+      },
     }
   }
 
   private async validateUser(userDto: CreateUserDto) {
+    console.log('[AUTH] Login attempt for email:', userDto.email)
+
     const user = await this.userService.getUsersByEmail(userDto.email)
-    const passwordEquals = await bcrypt.compare(userDto.password, user.password)
-    if (user && passwordEquals) {
-      return user
+
+    if (!user) {
+      console.log('[AUTH] User not found')
+      throw new UnauthorizedException('Пользователь с таким email не найден')
     }
-    throw new UnauthorizedException({
-      message: 'Некорректный емайл или пароль',
-    })
+
+    if (user.banned) {
+      console.log('[AUTH] User is banned')
+      throw new UnauthorizedException('Пользователь заблокирован')
+    }
+
+    console.log('[AUTH] Input password:', `"${userDto.password}"`)
+    console.log('[AUTH] DB password hash:', user.password)
+
+    const passwordEquals = await bcrypt.compare(userDto.password, user.password)
+    console.log('[AUTH] Password comparison result:', passwordEquals)
+
+    if (!passwordEquals) {
+      const manualHash = await bcrypt.hash(userDto.password, 10)
+      console.log('[AUTH] New hash of input password:', manualHash)
+
+      throw new UnauthorizedException('Неверный пароль')
+    }
+
+    console.log('[AUTH] Authentication successful')
+    return user
   }
 }
