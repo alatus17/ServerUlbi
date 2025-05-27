@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv'
+dotenv.config({ path: '.development.env' })
+
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
@@ -12,7 +15,17 @@ async function start() {
     .setTitle('Урок по продвинутому BACKEND')
     .setDescription('Документация REST API')
     .setVersion('1.0.0')
-    .addTag('niksolid')
+    .addTag('ULBI TV')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        in: 'header',
+      },
+      'JWT-auth'
+    )
     .build()
 
   const document = SwaggerModule.createDocument(app, config)
