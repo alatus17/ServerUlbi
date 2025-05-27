@@ -1,33 +1,56 @@
-import { Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-
-import { Book } from './book.entity'
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
+import { InjectModel } from '@nestjs/sequelize'
+import { Book } from '../books/books.model'
+import { Author } from '../authors/authors.model'
 import { CreateBookDto } from './create-book.dto'
-
-import { Repository } from 'typeorm'
 
 @Injectable()
 export class BooksService {
   constructor(
-    @InjectRepository(Book)
-    private booksRepository: Repository<Book>
+    @InjectModel(Book)
+    private bookRepository: typeof Book,
+
+    @InjectModel(Author)
+    private authorRepository: typeof Author,
   ) {}
 
-  create(dto: CreateBookDto): Promise<Book> {
-    const book = this.booksRepository.create(dto)
-    return this.booksRepository.save(book)
+  async create(dto: CreateBookDto): Promise<Book> {
+    let author = await this.authorRepository.findOne({ where: { name: dto.authorName } })
+    if (!author) {
+      author = await this.authorRepository.create({ name: dto.authorName })
+    }
+
+    const existing = await this.bookRepository.findOne({
+      where: { title: dto.title, authorId: author.id },
+    })
+    if (existing) {
+      throw new HttpException('Книга уже существует', HttpStatus.CONFLICT)
+    }
+
+    return this.bookRepository.create({
+      title: dto.title,
+      authorId: author.id,
+    })
   }
 
   findAll(): Promise<Book[]> {
-    return this.booksRepository.find()
+    return this.bookRepository.findAll({ include: [Author] })
   }
 
-  findOne(id: number): Promise<Book> {
-    return this.booksRepository.findOneBy({ id })
+  async findOne(id: number): Promise<Book> {
+    const book = await this.bookRepository.findByPk(id, { include: [Author] })
+    if (!book) {
+      throw new HttpException('Книга не найдена', HttpStatus.NOT_FOUND)
+    }
+    return book
   }
 
   async remove(id: number): Promise<void> {
-    await this.booksRepository.delete(id)
-    return undefined
+    const book = await this.bookRepository.findByPk(id)
+    if (!book) {
+      throw new HttpException('Книга не найдена', HttpStatus.NOT_FOUND)
+    }
+    await book.destroy()
   }
 }
+
